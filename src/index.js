@@ -29,12 +29,13 @@ const game = new Phaser.Game(config);
 let platforms;
 let player;
 let cursors;
+let stars;
 
 // loads assest we need with var name then location
 function preload() {
   this.load.image('sky', skyImg);
   this.load.image('ground', groundImg);
-  // this.load.image('star', starImg);
+  this.load.image('star', starImg);
   // this.load.image('bomb', 'assets/bomb.png');
   this.load.spritesheet('dude', 
       dudeSprite,
@@ -87,8 +88,32 @@ this.anims.create({
 });
 
 this.physics.add.collider(player, platforms);
+
 // cursor inputs like event listeners
 cursors = this.input.keyboard.createCursorKeys();
+
+
+// creates 12 stars with a random bounce between 0.4 and 0.8
+stars = this.physics.add.group({
+  key: 'star',
+  repeat: 11,
+  setXY: { x: 12, y: 0, stepX: 70 }
+});
+
+stars.children.iterate(function (child) {
+
+  child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+
+});
+this.physics.add.collider(stars, platforms);
+
+
+// star disappears when player overlaps
+this.physics.add.overlap(player, stars, collectStar, null, this);
+function collectStar (player, star)
+{
+    star.disableBody(true, true);
+}
 }
 
 
@@ -119,15 +144,3 @@ if (cursors.up.isDown && player.body.touching.down)
 }
     }
 
-// this.load.image("logo", logoImg);
-
-// const logo = this.add.image(400, 150, "logo");
-
-// this.tweens.add({
-//   targets: logo,
-//   y: 450,
-//   duration: 2000,
-//   ease: "Power2",
-//   yoyo: true,
-//   loop: -1
-// });
