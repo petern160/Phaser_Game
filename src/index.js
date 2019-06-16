@@ -28,6 +28,7 @@ const game = new Phaser.Game(config);
 
 let platforms;
 let player;
+let cursors;
 
 // loads assest we need with var name then location
 function preload() {
@@ -84,11 +85,38 @@ this.anims.create({
     frameRate: 10,
     repeat: -1
 });
+
+this.physics.add.collider(player, platforms);
+// cursor inputs like event listeners
+cursors = this.input.keyboard.createCursorKeys();
 }
 
 
 function update ()
     {
+      if (cursors.left.isDown)
+{
+    player.setVelocityX(-160);
+
+    player.anims.play('left', true);
+}
+else if (cursors.right.isDown)
+{
+    player.setVelocityX(160);
+
+    player.anims.play('right', true);
+}
+else
+{
+    player.setVelocityX(0);
+
+    player.anims.play('turn');
+}
+
+if (cursors.up.isDown && player.body.touching.down)
+{
+    player.setVelocityY(-330);
+}
     }
 
 // this.load.image("logo", logoImg);
