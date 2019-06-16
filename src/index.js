@@ -3,6 +3,7 @@ import logoImg from "./assets/logo.png";
 import skyImg from './assets/sky.png';
 import starImg from './assets/star.png';
 import groundImg from './assets/platform.png';
+import dudeSprite from './assets/dude.png';
 
 const config = {
   type: Phaser.AUTO,
@@ -25,6 +26,8 @@ const config = {
 
 const game = new Phaser.Game(config);
 
+let platforms;
+let player;
 
 // loads assest we need with var name then location
 function preload() {
@@ -32,10 +35,10 @@ function preload() {
   this.load.image('ground', groundImg);
   // this.load.image('star', starImg);
   // this.load.image('bomb', 'assets/bomb.png');
-  // this.load.spritesheet('dude', 
-  //     'assets/dude.png',
-  //     { frameWidth: 32, frameHeight: 48 }
-  // );
+  this.load.spritesheet('dude', 
+      dudeSprite,
+      { frameWidth: 32, frameHeight: 48 }
+  );
 }
 
 // order matters for the spirtes need to put background first then elements after
@@ -43,7 +46,10 @@ function create() {
   // new image game object adding it to current scenese display list
   this.add.image(400, 300, 'sky');
   // this.add.image(400, 300, 'star');
-  let platforms = this.physics.add.staticGroup();
+  // creates local static platform variable that is not touched by physics
+  // has position and size only
+   platforms = this.physics.add.staticGroup();
+  // scale it by x2 so players do not drop off sides refresh body for static physics
   platforms.create(400, 568, 'ground').setScale(2).refreshBody();
   //lower right
   platforms.create(600, 400, 'ground');
@@ -51,7 +57,35 @@ function create() {
   platforms.create(50, 250, 'ground');
   // highest right
   platforms.create(750, 220, 'ground');
+
+  // has dynamic properties
+  player = this.physics.add.sprite(100, 450, 'dude');
+
+  player.setBounce(0.2);
+  player.setCollideWorldBounds(true);
+
+  this.anims.create({
+    key: 'left',
+    frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+    frameRate: 10,
+    // tells animation to loop
+    repeat: -1
+});
+
+this.anims.create({
+    key: 'turn',
+    frames: [ { key: 'dude', frame: 4 } ],
+    frameRate: 20
+});
+
+this.anims.create({
+    key: 'right',
+    frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+    frameRate: 10,
+    repeat: -1
+});
 }
+
 
 function update ()
     {
