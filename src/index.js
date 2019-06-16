@@ -4,6 +4,7 @@ import skyImg from './assets/sky.png';
 import starImg from './assets/star.png';
 import groundImg from './assets/platform.png';
 import dudeSprite from './assets/dude.png';
+import bombImg from './assets/bomb.png'
 
 const config = {
   type: Phaser.AUTO,
@@ -30,13 +31,16 @@ let platforms;
 let player;
 let cursors;
 let stars;
+let score = 0;
+let scoreText;
+let bombs;
 
 // loads assest we need with var name then location
 function preload() {
   this.load.image('sky', skyImg);
   this.load.image('ground', groundImg);
   this.load.image('star', starImg);
-  // this.load.image('bomb', 'assets/bomb.png');
+  this.load.image('bomb', bombImg);
   this.load.spritesheet('dude', 
       dudeSprite,
       { frameWidth: 32, frameHeight: 48 }
@@ -108,11 +112,57 @@ stars.children.iterate(function (child) {
 this.physics.add.collider(stars, platforms);
 
 
-// star disappears when player overlaps
+// star disappears when player overlaps and updates score
 this.physics.add.overlap(player, stars, collectStar, null, this);
+
+// bombs spawn
 function collectStar (player, star)
 {
     star.disableBody(true, true);
+
+    score += 10;
+    scoreText.setText('Score: ' + score);
+
+    if (stars.countActive(true) === 0)
+    {
+        stars.children.iterate(function (child) {
+
+            child.enableBody(true, child.x, 0, true, true);
+
+        });
+
+        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+        var bomb = bombs.create(x, 16, 'bomb');
+        bomb.setBounce(1);
+        bomb.setCollideWorldBounds(true);
+        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+
+    }
+}
+
+// score appears top left
+scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+
+// bomb dynamic group
+bombs = this.physics.add.group();
+
+this.physics.add.collider(bombs, platforms);
+
+// if collides with player hitBomb function will happen
+this.physics.add.collider(player, bombs, hitBomb, null, this);
+
+// gameover if bomb hits player
+function hitBomb (player, bomb)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    gameOver = true;
 }
 }
 
