@@ -3,8 +3,9 @@ import logoImg from "./assets/logo.png";
 import skyImg from './assets/sky.png';
 import starImg from './assets/star.png';
 import groundImg from './assets/platform.png';
-import dudeSprite from './assets/dude.png';
+import dudeSprite from './assets/char.png';
 import bombImg from './assets/bomb.png'
+import bulletImg from './assets/bullet.png';
 
 const config = {
   type: Phaser.AUTO,
@@ -34,6 +35,11 @@ let stars;
 let score = 0;
 let scoreText;
 let bombs;
+let bullets;
+let lastFired = 0;
+
+
+
 
 // loads assest we need with var name then location
 function preload() {
@@ -41,20 +47,25 @@ function preload() {
   this.load.image('ground', groundImg);
   this.load.image('star', starImg);
   this.load.image('bomb', bombImg);
+  this.load.image('bullet', bulletImg);
   this.load.spritesheet('dude', 
       dudeSprite,
-      { frameWidth: 32, frameHeight: 48 }
+      { frameWidth: 118, frameHeight: 150 }
   );
 }
 
+
+
 // order matters for the spirtes need to put background first then elements after
 function create() {
+  
+  
   // new image game object adding it to current scenese display list
   this.add.image(400, 300, 'sky');
   // this.add.image(400, 300, 'star');
   // creates local static platform variable that is not touched by physics
   // has position and size only
-   platforms = this.physics.add.staticGroup();
+  platforms = this.physics.add.staticGroup();
   // scale it by x2 so players do not drop off sides refresh body for static physics
   platforms.create(400, 568, 'ground').setScale(2).refreshBody();
   //lower right
@@ -64,12 +75,56 @@ function create() {
   // highest right
   platforms.create(750, 220, 'ground');
 
-  // has dynamic properties
-  player = this.physics.add.sprite(100, 450, 'dude');
 
+
+  // has dynamic properties physics
+  player = this.physics.add.sprite(0, 0, 'dude');
+  player.setScale(0.5)
   player.setBounce(0.2);
   player.setCollideWorldBounds(true);
 
+
+  var Bullet = new Phaser.Class({
+
+    Extends: Phaser.GameObjects.Image,
+
+    initialize:
+
+    function Bullet (scene)
+    {
+        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bullet');
+
+        this.speed = Phaser.Math.GetSpeed(300, 1);
+    },
+
+    fire: function (x, y)
+    {
+        this.setPosition(x + 1, y - 50);
+       
+        this.setActive(true);
+        this.setVisible(true);
+    },
+
+    update: function (time, delta)
+    {
+        this.x -= this.speed * delta;
+
+        if (this.x < -50)
+        {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+    }
+
+});
+
+bullets = this.add.group({
+    classType: Bullet,
+    maxSize: 5,
+    runChildUpdate: true
+});
+  
+ 
   this.anims.create({
     key: 'left',
     frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
@@ -78,24 +133,29 @@ function create() {
     repeat: -1
 });
 
+
 this.anims.create({
     key: 'turn',
-    frames: [ { key: 'dude', frame: 4 } ],
+    frames: [ { key: 'dude', frame: 0 } ],
     frameRate: 20
 });
 
+
+
 this.anims.create({
     key: 'right',
-    frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+    frames: this.anims.generateFrameNumbers('dude', { start: 3, end: 6 }),
     frameRate: 10,
     repeat: -1
 });
 
-this.physics.add.collider(player, platforms);
 
+
+this.physics.add.collider(player, platforms);
+this.physics.add.collider(bullets, platforms);
 // cursor inputs like event listeners
 cursors = this.input.keyboard.createCursorKeys();
-
+// isSpaceDown = cursors.space.isDown;
 
 // creates 12 stars with a random bounce between 0.4 and 0.8
 stars = this.physics.add.group({
@@ -110,6 +170,9 @@ stars.children.iterate(function (child) {
 
 });
 this.physics.add.collider(stars, platforms);
+
+
+// this.physics.add.collider(bullet, platforms);
 
 
 // star disappears when player overlaps and updates score
@@ -167,7 +230,7 @@ function hitBomb (player, bomb)
 }
 
 
-function update ()
+function update (time, delta)
     {
       if (cursors.left.isDown)
 {
@@ -192,5 +255,20 @@ if (cursors.up.isDown && player.body.touching.down)
 {
     player.setVelocityY(-330);
 }
-    }
 
+
+// sprite.rotation = game.physics.arcade.angleToPointer(sprite);
+
+if (cursors.space.isDown && time > lastFired)
+{
+    var bullet = bullets.get();
+
+    if (bullet)
+    {
+        bullet.fire(player.x, player.y + 65);
+       
+        lastFired = time + 1; 
+    }
+}
+
+    }
